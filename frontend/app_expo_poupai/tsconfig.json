@@ -1,0 +1,21 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "module": "ES6",  // Exemplo do módulo correto
+    "forceConsistentCasingInFileNames": true,  // Forçar consistência de maiúsculas/minúsculas nas importações
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+      "src/**/*", 
+    "node_modules/**/*" 
+  ]
+}
