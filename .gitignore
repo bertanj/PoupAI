@@ -1,0 +1,72 @@
+# ===== SO / Geral =====
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+.eslintcache
+
+# ===== Editores =====
+.vscode/
+.idea/
+*.iml
+
+# ===== FRONTEND (Expo / React Native) =====
+frontend/node_modules/
+frontend/.expo/
+frontend/.expo-shared/
+frontend/.metro-cache/
+frontend/.cache/
+frontend/dist/
+frontend/web-build/
+frontend/coverage/
+
+# Variáveis de ambiente (manter exemplo)
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Credenciais móveis (NÃO versionar)
+frontend/**/*.jks
+frontend/**/*.keystore
+frontend/**/*.p12
+frontend/**/*.mobileprovision
+frontend/**/*.pem
+frontend/**/*.p8
+frontend/**/google-services.json
+frontend/**/GoogleService-Info.plist
+
+# Se for Expo managed (sem custom nativo), ignore android/ios.
+# Se você customiza nativo, REMOVA essas linhas abaixo:
+frontend/android/
+frontend/ios/
+
+# ===== BACKEND (.NET) =====
+backend/**/bin/
+backend/**/obj/
+backend/**/.vs/
+
+# Arquivos de usuário/IDE
+backend/**/*.user
+backend/**/*.rsuser
+backend/**/*.suo
+backend/**/*.userosscache
+backend/**/*.sln.docstates
+
+# Perfis/Configs locais
+backend/**/Properties/launchSettings.json
+backend/**/PublishProfiles/
+
+# AppSettings com segredos locais
+backend/**/appsettings.*.local.json
+# (opcional) se tiver segredos, ignore o de Dev também:
+# backend/**/appsettings.Development.json
+
+# ===== Outros =====
+*.orig
+*.tgz
+tmp/
+temp/
