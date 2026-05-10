@@ -19,6 +19,7 @@ import {
   ResumoMensal,
   CategoriaItem,
 } from "../../src/services/dashboard";
+import { getAlertas, ContaAlertas } from "../../src/services/conta";
 import { Picker } from "@react-native-picker/picker";
 
 const screenWidth = Dimensions.get("window").width;
@@ -71,11 +72,22 @@ export default function HomeScreen() {
     queryFn: () => getGastosPorCategoria(usuarioId, selectedYear, selectedMonth),
   });
 
+  const alertasQ = useQuery<ContaAlertas>({
+    queryKey: ["alertas", usuarioId],
+    queryFn: () => getAlertas(usuarioId),
+    retry: false,
+  });
+
+  const { refetch: refetchResumo } = resumoQ;
+  const { refetch: refetchCategorias } = categoriasQ;
+  const { refetch: refetchAlertas } = alertasQ;
+
   useFocusEffect(
     useCallback(() => {
-      resumoQ.refetch();
-      categoriasQ.refetch();
-    }, [resumoQ, categoriasQ])
+      refetchResumo();
+      refetchCategorias();
+      refetchAlertas();
+    }, [refetchResumo, refetchCategorias, refetchAlertas])
   );
 
   const resumo = resumoQ.data ?? { saldo: 0, totalreceitas: 0, totaldespesas: 0 };
@@ -178,6 +190,69 @@ export default function HomeScreen() {
           })}
         </Text>
       </View>
+
+      {/* Alertas de contas */}
+      {alertasQ.data && (
+        (alertasQ.data.quantVencidas > 0 || alertasQ.data.quantProximas > 0 ||
+         alertasQ.data.totalAPagar > 0 || alertasQ.data.totalAReceber > 0) && (
+          <View style={{ marginBottom: 16 }}>
+            {alertasQ.data.quantVencidas > 0 && (
+              <TouchableOpacity
+                style={styles.alertaVencido}
+                onPress={() => router.push("/contas")}
+                activeOpacity={0.8}
+              >
+                <Feather name="alert-circle" size={18} color="#EF4444" />
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={styles.alertaVencidoTitulo}>
+                    {alertasQ.data.quantVencidas} conta{alertasQ.data.quantVencidas > 1 ? "s" : ""} vencida{alertasQ.data.quantVencidas > 1 ? "s" : ""}
+                  </Text>
+                  <Text style={styles.alertaVencidoSub}>
+                    R$ {alertasQ.data.valorVencidas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} em atraso
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={18} color="#EF4444" />
+              </TouchableOpacity>
+            )}
+            {alertasQ.data.quantProximas > 0 && (
+              <TouchableOpacity
+                style={styles.alertaProximo}
+                onPress={() => router.push("/contas")}
+                activeOpacity={0.8}
+              >
+                <Feather name="clock" size={18} color="#D97706" />
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={styles.alertaProximoTitulo}>
+                    {alertasQ.data.quantProximas} conta{alertasQ.data.quantProximas > 1 ? "s" : ""} vence{alertasQ.data.quantProximas > 1 ? "m" : ""} em 7 dias
+                  </Text>
+                  <Text style={styles.alertaProximoSub}>
+                    R$ {alertasQ.data.valorProximas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} a pagar
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={18} color="#D97706" />
+              </TouchableOpacity>
+            )}
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {alertasQ.data.totalAPagar > 0 && (
+                <View style={styles.infoChipPagar}>
+                  <Feather name="arrow-up-circle" size={14} color="#EF4444" />
+                  <Text style={styles.infoChipPagarText}>
+                    A pagar: R$ {alertasQ.data.totalAPagar.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </Text>
+                </View>
+              )}
+              {alertasQ.data.totalAReceber > 0 && (
+                <View style={styles.infoChipReceber}>
+                  <Feather name="arrow-down-circle" size={14} color="#22C55E" />
+                  <Text style={styles.infoChipReceberText}>
+                    A receber: R$ {alertasQ.data.totalAReceber.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )
+      )}
 
       {/* Tabs */}
       <View style={styles.tabsBox}>
@@ -284,6 +359,31 @@ export default function HomeScreen() {
         ) : (
           <Text style={{ color: "#888" }}>Sem dados para o gráfico.</Text>
         )}
+      </View>
+
+      {/* Gerenciar */}
+      <View style={styles.cardBox}>
+        <Text style={styles.sectionTitle}>Gerenciar</Text>
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <TouchableOpacity style={styles.gerenciarCard} onPress={() => router.push("/categorias")} activeOpacity={0.8}>
+            <View style={[styles.gerenciarIcon, { backgroundColor: "#EDE9FE" }]}>
+              <Feather name="tag" size={20} color="#7B5CFA" />
+            </View>
+            <Text style={styles.gerenciarLabel}>Categorias</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.gerenciarCard} onPress={() => router.push("/contatos")} activeOpacity={0.8}>
+            <View style={[styles.gerenciarIcon, { backgroundColor: "#FEE2E2" }]}>
+              <Feather name="users" size={20} color="#EF4444" />
+            </View>
+            <Text style={styles.gerenciarLabel}>Contatos</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.gerenciarCard} onPress={() => router.push("/contas")} activeOpacity={0.8}>
+            <View style={[styles.gerenciarIcon, { backgroundColor: "#DCFCE7" }]}>
+              <Feather name="file-text" size={20} color="#22C55E" />
+            </View>
+            <Text style={styles.gerenciarLabel}>Contas</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Modal seletor de mês/ano */}
@@ -538,5 +638,72 @@ const styles = StyleSheet.create({
   },
   modalBtnText: {
     fontWeight: "bold",
+  },
+  alertaVencido: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEE2E2",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+  },
+  alertaVencidoTitulo: { fontSize: 14, fontWeight: "bold", color: "#EF4444" },
+  alertaVencidoSub: { fontSize: 12, color: "#EF4444" },
+  alertaProximo: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEF3C7",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+  },
+  alertaProximoTitulo: { fontSize: 14, fontWeight: "bold", color: "#D97706" },
+  alertaProximoSub: { fontSize: 12, color: "#D97706" },
+  infoChipPagar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#FEE2E2",
+    borderRadius: 10,
+    padding: 8,
+  },
+  infoChipPagarText: { fontSize: 12, fontWeight: "600", color: "#EF4444", flex: 1 },
+  infoChipReceber: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#DCFCE7",
+    borderRadius: 10,
+    padding: 8,
+  },
+  infoChipReceberText: { fontSize: 12, fontWeight: "600", color: "#22C55E", flex: 1 },
+  gerenciarCard: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  gerenciarIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  gerenciarLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    textAlign: "center",
   },
 });

@@ -23,8 +23,9 @@ import {
   getUltimasTransacoes,
   Transacao as ApiTransacao,
 } from "../../src/services/transacao";
-import { criarReceita } from "../../src/services/receita";
-import { criarDespesa } from "../../src/services/despesa";
+import { criarReceita, deletarReceita } from "../../src/services/receita";
+import { criarDespesa, deletarDespesa } from "../../src/services/despesa";
+import { getCategorias, Categoria } from "../../src/services/categoria";
 
 const filters = [
   { label: "Todos", value: "todos" as const },
@@ -35,6 +36,8 @@ const filters = [
 type FeatherGlyphs = "shopping-cart" | "dollar-sign" | "coffee" | "filter";
 
 type UITransacao = {
+  id: number;
+  tipoOriginal: string;
   tipo: "entrada" | "saida";
   categoria: string;
   valor: number;
@@ -43,17 +46,8 @@ type UITransacao = {
   data: string;
 };
 
-const categoriasList = [
-  { label: "Alimentação", value: "Alimentação", icone: "shopping-cart", id: 1 },
-  { label: "Transporte", value: "Transporte", icone: "shopping-cart", id: 2 },
-  { label: "Saúde", value: "Saúde", icone: "shopping-cart", id: 3 },
-  { label: "Lazer", value: "Lazer", icone: "coffee", id: 4 },
-  { label: "Viagem", value: "Viagem", icone: "shopping-cart", id: 5 },
-];
-
-function getCategoriaIcon(categoria: string): FeatherGlyphs {
-  const found = categoriasList.find((c) => c.value === categoria);
-  return (found?.icone as FeatherGlyphs) || "shopping-cart";
+function getCategoriaIcon(_categoria: string): FeatherGlyphs {
+  return "shopping-cart";
 }
 
 function formatDateLabel(dateISO: string) {
@@ -140,31 +134,31 @@ function parseBRLToNumber(br: string): number {
 function CategoryPicker({
   value,
   onChange,
+  categorias,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  value: number;
+  onChange: (id: number) => void;
+  categorias: Categoria[];
 }) {
+  const nomeAtual = categorias.find((c) => c.id === value)?.nome || "";
+
   if (Platform.OS === "ios") {
     const abrirSheet = () => {
       Keyboard.dismiss();
-      const labels = categoriasList.map((c) => c.label);
-      const options = [...labels, "Cancelar"];
+      const options = [...categorias.map((c) => c.nome), "Cancelar"];
       const cancelButtonIndex = options.length - 1;
       ActionSheetIOS.showActionSheetWithOptions(
         { title: "Categoria", options, cancelButtonIndex },
         (idx) => {
-          if (idx !== cancelButtonIndex) {
-            const escolhido = categoriasList[idx].value;
-            onChange(escolhido);
-          }
+          if (idx !== cancelButtonIndex) onChange(categorias[idx].id);
         }
       );
     };
 
     return (
       <TouchableOpacity style={styles.input} onPress={abrirSheet} activeOpacity={0.7}>
-        <Text style={{ color: value ? "#222" : "#bbb" }}>
-          {value || "Selecione uma categoria"}
+        <Text style={{ color: nomeAtual ? "#222" : "#bbb" }}>
+          {nomeAtual || "Selecione uma categoria"}
         </Text>
       </TouchableOpacity>
     );
@@ -174,13 +168,13 @@ function CategoryPicker({
     <View style={styles.inputPicker}>
       <Picker
         selectedValue={value}
-        onValueChange={(v) => onChange(String(v))}
+        onValueChange={(v) => onChange(Number(v))}
         mode="dialog"
         style={{ height: 48 }}
         dropdownIconColor="#7B5CFA"
       >
-        {categoriasList.map((cat) => (
-          <Picker.Item key={cat.id} label={cat.label} value={cat.value} />
+        {categorias.map((cat) => (
+          <Picker.Item key={cat.id} label={cat.nome} value={cat.id} />
         ))}
       </Picker>
     </View>
@@ -196,9 +190,9 @@ export default function Transactions() {
   const [modalVisible, setModalVisible] = useState(false);
   const [tipo, setTipo] = useState<"despesa" | "receita">("despesa");
   const [descricao, setDescricao] = useState("");
-  const [valor, setValor] = useState(""); 
-  const [categoria, setCategoria] = useState(categoriasList[0].value);
-  const [data, setData] = useState(todayBR()); 
+  const [valor, setValor] = useState("");
+  const [categoriaId, setCategoriaId] = useState<number>(0);
+  const [data, setData] = useState(todayBR());
 
   const q = useQuery({
     queryKey: ["ultimas-transacoes", usuarioId],
@@ -208,6 +202,12 @@ export default function Transactions() {
     },
   });
 
+  const categoriasQ = useQuery<Categoria[]>({
+    queryKey: ["categorias"],
+    queryFn: getCategorias,
+  });
+  const categorias = categoriasQ.data ?? [];
+
   useEffect(() => {
     if (modalVisible) {
       setData(todayBR());
@@ -216,12 +216,10 @@ export default function Transactions() {
   }, [modalVisible]);
 
   useEffect(() => {
-    if (tipo === "receita") {
-      setCategoria("");
-    } else {
-      if (!categoria) setCategoria(categoriasList[0].value);
+    if (tipo === "despesa" && categoriaId === 0 && categorias.length > 0) {
+      setCategoriaId(categorias[0].id);
     }
-  }, [tipo]);
+  }, [tipo, categorias]);
 
   const uiTransacoes: UITransacao[] = useMemo(() => {
     const src: ApiTransacao[] = q.data || [];
@@ -235,6 +233,8 @@ export default function Transactions() {
       const descricao = t.descricao || (tipoUI === "entrada" ? "Receita" : "Despesa");
 
       return {
+        id: t.id,
+        tipoOriginal: String((t as any).tipo || ""),
         tipo: tipoUI,
         categoria: categoriaBackend,
         descricao,
@@ -268,8 +268,34 @@ export default function Transactions() {
       });
   }, [filtered]);
 
+  async function handleDeletar(t: UITransacao) {
+    Alert.alert(
+      "Excluir transação",
+      `Excluir "${t.descricao || t.categoria}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (t.tipoOriginal.toLowerCase() === "receita") {
+                await deletarReceita(t.id);
+              } else {
+                await deletarDespesa(t.id);
+              }
+              q.refetch();
+            } catch (e: any) {
+              Alert.alert("Erro", e?.message || "Falha ao excluir.");
+            }
+          },
+        },
+      ]
+    );
+  }
+
   async function handleSalvar() {
-    if (!descricao || !valor || !data || (tipo === "despesa" && !categoria)) {
+    if (!descricao || !valor || !data || (tipo === "despesa" && !categoriaId)) {
       Alert.alert(
         "Campos obrigatórios",
         "Preencha descrição, valor e data (e categoria se for despesa)."
@@ -296,8 +322,6 @@ export default function Transactions() {
           data: iso,
         });
       } else {
-        const categoriaId =
-          categoriasList.find((c) => c.value === categoria)?.id || 1;
         await criarDespesa({
           usuarioId,
           descricao,
@@ -311,7 +335,7 @@ export default function Transactions() {
       setTipo("despesa");
       setDescricao("");
       setValor("");
-      setCategoria(categoriasList[0].value);
+      setCategoriaId(categorias[0]?.id ?? 0);
       setData(todayBR());
 
       q.refetch();
@@ -427,6 +451,13 @@ export default function Transactions() {
                     minimumFractionDigits: 2,
                   })}
                 </Text>
+                <TouchableOpacity
+                  onPress={() => handleDeletar(t)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={{ marginLeft: 8 }}
+                >
+                  <Feather name="trash-2" size={18} color="#9CA3AF" />
+                </TouchableOpacity>
               </View>
             ))}
           </View>
@@ -504,12 +535,7 @@ export default function Transactions() {
             {tipo === "despesa" && (
               <>
                 <Text style={styles.modalLabel}>Categoria</Text>
-                <CategoryPicker value={categoria} onChange={setCategoria} />
-                {!!categoria && (
-                  <Text style={{ color: "#888", fontSize: 13, marginBottom: 8, marginLeft: 2 }}>
-                    Categoria selecionada: {categoria}
-                  </Text>
-                )}
+                <CategoryPicker value={categoriaId} onChange={setCategoriaId} categorias={categorias} />
               </>
             )}
 

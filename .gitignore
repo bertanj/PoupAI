@@ -8,13 +8,18 @@ yarn-error.log*
 pnpm-debug.log*
 *.tsbuildinfo
 .eslintcache
+*.db
+*.sqlite
+*.sqlite3
 
-# ===== Editores =====
+# ===== Editores / Ferramentas locais =====
 .vscode/
 .idea/
 *.iml
+.claude/
 
 # ===== FRONTEND (Expo / React Native) =====
+# Root-level (se existir)
 frontend/node_modules/
 frontend/.expo/
 frontend/.expo-shared/
@@ -24,10 +29,22 @@ frontend/dist/
 frontend/web-build/
 frontend/coverage/
 
-# Variáveis de ambiente (manter exemplo)
+# Nested app (app_expo_poupai)
+frontend/app_expo_poupai/node_modules/
+frontend/app_expo_poupai/.expo/
+frontend/app_expo_poupai/.expo-shared/
+frontend/app_expo_poupai/.metro-cache/
+frontend/app_expo_poupai/dist/
+frontend/app_expo_poupai/web-build/
+frontend/app_expo_poupai/coverage/
+
+# Variáveis de ambiente
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
+frontend/app_expo_poupai/.env
+frontend/app_expo_poupai/.env.*
+!frontend/app_expo_poupai/.env.example
 
 # Credenciais móveis (NÃO versionar)
 frontend/**/*.jks
@@ -39,10 +56,11 @@ frontend/**/*.p8
 frontend/**/google-services.json
 frontend/**/GoogleService-Info.plist
 
-# Se for Expo managed (sem custom nativo), ignore android/ios.
-# Se você customiza nativo, REMOVA essas linhas abaixo:
+# Expo managed (sem custom nativo)
 frontend/android/
 frontend/ios/
+frontend/app_expo_poupai/android/
+frontend/app_expo_poupai/ios/
 
 # ===== BACKEND (.NET) =====
 backend/**/bin/
@@ -62,8 +80,7 @@ backend/**/PublishProfiles/
 
 # AppSettings com segredos locais
 backend/**/appsettings.*.local.json
-# (opcional) se tiver segredos, ignore o de Dev também:
-# backend/**/appsettings.Development.json
+backend/**/appsettings.Development.json
 
 # ===== Outros =====
 *.orig

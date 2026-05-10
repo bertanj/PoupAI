@@ -26,5 +26,20 @@ namespace PoupAI.Controllers
             await _repo.AddValue(categoria);
             return Ok(categoria);
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Categoria categoria)
+        {
+            categoria.Id = id;
+            await _repo.Update(categoria);
+            return Ok(categoria);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _repo.Delete(id);
+            return NoContent();
+        }
     }
 }

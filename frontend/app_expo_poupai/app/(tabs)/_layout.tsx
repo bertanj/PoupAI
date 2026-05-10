@@ -2,8 +2,6 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 
-
-
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
@@ -21,26 +19,56 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-          },
+          ios: { position: 'absolute' },
           default: {},
         }),
       }}>
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="transactions"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Transações',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="arrow.left.arrow.right" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="goals"
+        options={{
+          title: 'Metas',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="categorias"
+        options={{
+          title: 'Categorias',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="tag.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="contas"
+        options={{
+          title: 'Contas',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="creditcard.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="contatos"
+        options={{
+          title: 'Contatos',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
+        }}
+      />
+      {/* Telas sem tab bar */}
+      <Tabs.Screen name="login"    options={{ href: null }} />
+      <Tabs.Screen name="register" options={{ href: null }} />
+      <Tabs.Screen name="explore"  options={{ href: null }} />
     </Tabs>
   );
 }

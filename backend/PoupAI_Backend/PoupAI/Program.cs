@@ -17,12 +17,14 @@ namespace PoupAI
             {
                 options.AddPolicy("AllowFrontend", policy =>
                     policy.WithOrigins(
-                            "http://192.168.1.8:5177",   
-                            "exp://192.168.1.8:8081",    
-                            "http://localhost:5177",     
-                            "http://127.0.0.1:5177",     
-                            "http://localhost:8081",     
-                            "http://127.0.0.1:8081"      
+                            "http://192.168.1.8:5177",
+                            "exp://192.168.1.8:8081",
+                            "http://localhost:5177",
+                            "http://127.0.0.1:5177",
+                            "http://localhost:8081",
+                            "http://127.0.0.1:8081",
+                            "http://10.245.208.4:5177",
+                            "exp://10.245.208.4:8081"
                         )
                         .AllowAnyHeader()            
                         .AllowAnyMethod());           
@@ -38,6 +40,8 @@ namespace PoupAI
             builder.Services.AddScoped<DashboardRepository>(_ => new DashboardRepository(connectionString));
             builder.Services.AddScoped<TransacaoRepository>(_ => new TransacaoRepository(connectionString));
             builder.Services.AddScoped<SaldoService>(_ => new SaldoService(connectionString));
+            builder.Services.AddScoped<ContatoRepository>(_ => new ContatoRepository(connectionString));
+            builder.Services.AddScoped<ContaRepository>(_ => new ContaRepository(connectionString));
 
             var app = builder.Build();
 

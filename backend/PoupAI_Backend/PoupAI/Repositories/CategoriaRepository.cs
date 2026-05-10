@@ -20,8 +20,20 @@ namespace PoupAI.Repositories
         public async Task AddValue(Categoria categoria)
         {
             using var conn = new NpgsqlConnection(_connectionString);
-            var sql = "INSERT INTO Categoria (Nome) VALUES (@Nome)";
-            await conn.ExecuteAsync(sql, categoria);
+            var sql = "INSERT INTO Categoria (Nome) VALUES (@Nome) RETURNING Id";
+            categoria.Id = await conn.ExecuteScalarAsync<int>(sql, categoria);
+        }
+
+        public async Task Update(Categoria categoria)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            await conn.ExecuteAsync("UPDATE Categoria SET Nome=@Nome WHERE Id=@Id", categoria);
+        }
+
+        public async Task Delete(int id)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            await conn.ExecuteAsync("DELETE FROM Categoria WHERE Id=@Id", new { Id = id });
         }
     }
 }
